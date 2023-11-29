@@ -54,7 +54,7 @@ const sendMailToUserAdmin = async(userMail,token)=>{
     html: `
     <h1>Sistema de gestión - ADMINNISTRADOR  (FAST-CAR 🏁 🚗🚘)</h1>
     <hr>
-    <a href=${process.env.URL_FRONTEND}confirmar/${token}>Clic para confirmar tu cuenta</a>
+    <a href=${process.env.URL_BACKEND}confirmar/${token}>Clic para confirmar tu cuenta</a>
     <hr>
     <footer>Fast-Car te da la Bienvenida!</footer>
     `
