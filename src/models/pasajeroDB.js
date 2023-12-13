@@ -29,7 +29,7 @@ const pasajeroSchema = new Schema({
         required: true,
         trim: true
     },
-    confirmcorreo:{
+    confirmEmail:{
         type:Boolean,
         default:false
     },
@@ -39,7 +39,7 @@ const pasajeroSchema = new Schema({
     },
     rol:{
         type: String,
-        default: "Pasajero"
+        default: "pasajero"
     }
 
 },{

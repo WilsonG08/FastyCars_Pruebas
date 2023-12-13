@@ -1,5 +1,5 @@
 import Administrador from "../models/adminDB.js";
-import Chofer from "../models/conductorDB.js";
+import Conductor from "../models/conductorDB.js";
 import generarJWT from "../helpers/crearJWT.js";
 import mongoose from "mongoose";
 import Pasajero from '../models/pasajeroDB.js'
@@ -54,35 +54,6 @@ const confirmEmail = async (req, res) => {
     });
 };
 
-const login = async (req, res) => {
-    const { correo, password } = req.body;
-
-    if (Object.values(req.body).includes("")) return res.status(404).json({ msg: "Lo sentimos, debes llenar todos los campos" });
-
-    const administradorBDD = await Administrador.findOne({ correo }).select("-status -__v -token -updatedAt -createdAt");
-
-    if (administradorBDD?.confirmEmail == false) return res.status(403).json({ msg: "Lo sentimos, debs de verificar su cuenta" });
-
-    if (!administradorBDD) return res.status(404).json({ msg: "Lo sentimo, el administrador no se encuentra resgistrado" });
-
-    const verificarPassword = await administradorBDD.matchPassword(password);
-
-    if (!verificarPassword) return res.status(404).json({ msg: "Lo sentimos, el password no es el correcto" });
-
-    // Asignacion del ROL
-    const token = generarJWT(administradorBDD._id, "administrador");
-
-    const { adminNombre, adminApellido, phone, _id } = administradorBDD;
-
-    res.status(200).json({
-        token,
-        adminNombre,
-        adminApellido,
-        phone,
-        _id,
-        correo: administradorBDD.correo,
-    });
-};
 
 const perfil = (req, res) => {
     delete req.administradorBDD.token;
@@ -94,13 +65,6 @@ const perfil = (req, res) => {
 };
 
 
-/* 
-const listarChoferes = (req, res) => {
-    res.status(200).json({ res: "Lista de choferes registrados" });
-};
-
-*/
-
 const listarChoferes = async (req, res) => {
     try {
         const choferes = await Chofer.find({}, 'conductorNombre conductorApellido correo phone rol'); // Especifica los campos que deseas recuperar
@@ -111,11 +75,6 @@ const listarChoferes = async (req, res) => {
     }
 };
 
-
-/* 
-const listarpasajeros = (req, res) => {
-    res.status(200).json({ res: "Lista de pasajeros registrados" });
-}; */
 
 const listarpasajeros = async (req, res) => {
     try {
@@ -156,42 +115,6 @@ const detallePasjero = async (req, res) => {
 };
 
 
-/* 
-
-const actualizarPerfil = async (req, res) => {
-    const { id } = req.params
-
-    //if( !mongoose.Types.ObjectId.isValid(id) ) return res.status(404).json({msg:`Lo sentimos, debe ser un id válido`});
-
-//    if (Object.values(req.body).includes("")) return res.status(400).json({msg:"Lo sentimos, debes llenar todos los campos"})
-
-    const administradorBDD = await Administrador.findById(id)
-
-//    if(!administradorBDD) return res.status(404).json({msg: `Lo sentimos, no existe el administrador ${id}`})
-
-    if(administradorBDD.correo != req.body.correo)
-    {
-        const administradorBDDMail = await Administrador.findOne({correo:req.body.correo})
-        
-        if(administradorBDDMail)
-        {
-            return res.status(404).json({msg: `Lo sentimos, ya se encuentra registrado`})
-        }
-    }
-
-    administradorBDD.adminNombre = req.body.adminNombre || administradorBDD?.adminNombre
-    administradorBDD.adminApellido = req.body.adminApellido || administradorBDD?.adminApellido
-    //administradorBDD.correo = req.body.correo || administradorBDD?.correo
-    //administradorBDD.phone = req.body.phone || administradorBDD?.phone
-
-    await administradorBDD.save()
-
-    res.status(200).json({msg: "Perfil actualizado correctamente"})
-};
-
- */
-
-
 
 const actualizarPerfil = async (req, res) => {
     try {
@@ -220,8 +143,6 @@ const actualizarPerfil = async (req, res) => {
         res.status(500).json({ msg: "Error al actualizar el perfil" });
     }
 };
-
-
 
 
 const actualizarPassword = async (req, res) => {
@@ -298,38 +219,6 @@ const nuevoPassword = async (req, res) => {
 
 
 
-/* 
-const registrarChofer = async (req, res) => {
-
-    // Verifica si el usuario autenticado es un administrador
-    if (req.rol !== 'administrador') return res.status(403).json({ msg: 'Acceso no autorizado' });
-
-    const { conductorNombre, conductorApellido, correo, password, phone } = req.body
-
-
-    if (!conductorNombre || !conductorApellido || !correo || !password || !phone) return res.status(400).json({ msg: "Debes llenar los campos nombre, apellido, correo electrónico y contraseña", });
-
-
-    const verificarcorreoBDDChofer = await Chofer.findOne({ correo });
-
-    if (verificarcorreoBDDChofer) return res.status(400).json({ msg: "Lo sentimos, el correo electrónico ya se encuentra registrado del chofer", });
-
-    const nuevoChofer = new Chofer(req.body)
-
-    nuevoChofer.password = await nuevoChofer.encrypPassword(password);
-
-    const token = nuevoChofer.crearToken();
-
-    await sendMailToUserChofer(correo, token);
-
-    await nuevoChofer.save();
-
-    res.status(200).json({ msg: "REvisa tu correo electronico para confirmar tu cuenta chofer" });
-};
-
- */
-
-
 const registrarChofer = async (req, res) => {
     // Verify if the authenticated user is an administrator
     if (req.rol !== 'administrador') return res.status(403).json({ msg: 'Acceso no autorizado' });
@@ -371,14 +260,14 @@ const registrarChofer = async (req, res) => {
     }
 
     // Verificar la inscripción de vehículos duplicados
-    const existingChoferWithPlate = await Chofer.findOne({ placaVehiculo });
+    const existingChoferWithPlate = await Conductor.findOne({ placaVehiculo });
     if (existingChoferWithPlate) {
         return res.status(400).json({
             msg: 'La placa del vehículo ya está registrada para otro chofer',
         });
     }
 
-    const verificarcorreoBDDChofer = await Chofer.findOne({ correo });
+    const verificarcorreoBDDChofer = await Conductor.findOne({ correo });
 
     if (verificarcorreoBDDChofer) {
         return res.status(400).json({
@@ -386,7 +275,7 @@ const registrarChofer = async (req, res) => {
         });
     }
 
-    const nuevoChofer = new Chofer(req.body);
+    const nuevoChofer = new Conductor(req.body);
 
     nuevoChofer.password = await nuevoChofer.encrypPassword(password);
 
@@ -409,11 +298,9 @@ const registrarChofer = async (req, res) => {
 
 
 
-
 export {
     registro,
     confirmEmail,
-    login,
     perfil,
     listarChoferes,
     listarpasajeros,
